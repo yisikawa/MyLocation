@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
+import 'dart:io';
 import 'globals.dart' as globals;
 
 class MapPage extends StatefulWidget {
@@ -16,9 +18,35 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  String _data = "";
+
+  Future<void> _getAuth() async {
+    final res = await http.get(
+      'https://tokogeko.net/api/auth',
+      headers: {HttpHeaders.authorizationHeader: globals.authToken},
+    );
+    setState(() {
+      _data = res.body;
+      print(_data);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-//    print(globals.authToken);
+    return new Scaffold(
+      appBar: _buildBar(context),
+      body: _mapView(context),
+    );
+  }
+
+  Widget _buildBar(BuildContext context) {
+    return new AppBar(
+      title: new Text("Map Page"),
+      centerTitle: true,
+    );
+  }
+
+  Widget _mapView(BuildContext context) {
     return new FlutterMap(
       options: new MapOptions(
         center: new LatLng(35.000081, 137.004055),

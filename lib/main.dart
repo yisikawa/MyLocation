@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return new MaterialApp(
         title: 'Flutter Simple Login Demo',
-        theme: new ThemeData(primarySwatch: Colors.blue),
+        theme: new ThemeData(primarySwatch: Colors.blueGrey),
         home: new LoginPage(),
         routes: <String, WidgetBuilder>{
           '/map': (BuildContext context) => new MapPage(title: 'Map Page'),
