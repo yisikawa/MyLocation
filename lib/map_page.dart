@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 import 'globals.dart' as globals;
 
 class MapPage extends StatefulWidget {
@@ -18,17 +20,66 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  String _data = "";
+  List<dynamic> _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _getAuth();
+  }
 
   Future<void> _getAuth() async {
     final res = await http.get(
-      'https://tokogeko.net/api/auth',
+      globals.targetUrl + 'api/auth',
       headers: {HttpHeaders.authorizationHeader: globals.authToken},
     );
-    setState(() {
-      _data = res.body;
-      print(_data);
+    final jsonList = json.decode(res.body);
+
+    jsonList.forEach((value) {
+      Map _tmp = value;
+      _data.add(_tmp['user_id']);
     });
+  }
+
+  Widget buildListView() {
+    _getAuth();
+    return ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: _data.length,
+        /* Divider を挟む */
+        itemBuilder: (context, i) {
+          final index = i;
+          return ListTile(
+            title: Text(_data[index]),
+          );
+        });
+  }
+
+  DateTime selectedDate = DateTime.now();
+  String selectDate = '';
+
+  Future<Null> _selectDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2019, 4),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        //ここで選択された値を変数なり、コントローラーに代入する
+        globals.targetDate = DateFormat('yyyyMMdd').format(selectedDate);
+        print('select date = ' + globals.targetDate);
+      });
+    }
+  }
+
+  Completer<GoogleMapController> _controller = Completer();
+
+  void _onMapCreated(GoogleMapController controller) {
+    _controller.complete(controller);
   }
 
   @override
@@ -41,40 +92,33 @@ class _MapPageState extends State<MapPage> {
 
   Widget _buildBar(BuildContext context) {
     return new AppBar(
-      title: new Text("Map Page"),
-      centerTitle: true,
+      title: new Text("Map"),
+//      centerTitle: true,
+//      leading:
+      actions: <Widget>[
+        IconButton(
+            icon: Icon(Icons.account_box), onPressed: () => buildListView()),
+        IconButton(
+            icon: Icon(Icons.calendar_today),
+            onPressed: () => _selectDate(context)),
+        IconButton(icon: Icon(Icons.directions_walk), onPressed: null),
+        IconButton(icon: Icon(Icons.watch_later), onPressed: null),
+        IconButton(
+          icon: Icon(Icons.location_on),
+          onPressed: null,
+        ),
+      ],
     );
   }
 
   Widget _mapView(BuildContext context) {
-    return new FlutterMap(
-      options: new MapOptions(
-        center: new LatLng(35.000081, 137.004055),
+    return new GoogleMap(
+      onMapCreated: _onMapCreated,
+      initialCameraPosition: CameraPosition(
+        // 最初のカメラ位置
+        target: LatLng(35.000081, 137.004055),
         zoom: 17.0,
       ),
-      layers: [
-        new TileLayerOptions(
-          urlTemplate: "https://api.tiles.mapbox.com/v4/"
-              "{id}/{z}/{x}/{y}@2x.png?access_token={accessToken}",
-          additionalOptions: {
-            'accessToken':
-                'pk.eyJ1IjoieWlzaWthd2EiLCJhIjoiY2s2YndmdXFuMGZ1bDNsb3ZnMXBsbnI3eSJ9.gftC8NPsB9xNWIVEdWnTvw',
-            'id': 'mapbox.streets',
-          },
-        ),
-        new MarkerLayerOptions(
-          markers: [
-            new Marker(
-              width: 20.0,
-              height: 20.0,
-              point: new LatLng(35.000081, 137.004055),
-              builder: (ctx) => new Container(
-                child: new FlutterLogo(),
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 }

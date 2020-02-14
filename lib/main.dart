@@ -111,10 +111,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _loginPressed() async {
-    final res = await http.post('https://tokogeko.net/api/login',
+    final res = await http.post(globals.targetUrl + 'api/login',
         body: {'userid': _userid, 'password': _password});
     setState(() {
       globals.authToken = res.headers['authorization'];
+      print(globals.authToken);
 //      print(globals.authToken);
       Navigator.of(context).pushNamed('/map');
     });
