@@ -6,6 +6,7 @@ import 'dart:io';
 import 'globals.dart' as globals;
 
 class MapPage extends StatefulWidget {
+  static const id = 'map_page';
 // コンストラクト
   MapPage({Key key, this.title}) : super(key: key);
 
